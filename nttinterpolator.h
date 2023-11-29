@@ -3,15 +3,16 @@
 #include <algorithm>
 #include <ctime>
 #include <cstdio>
+#include <cstdint>
 
 namespace NTT
 {
-    const int mod = 1179649, G = 19;
-    const int N = (1 << 15) + 1, C = 17;
-    inline int add(int a, int b) { return a + b >= mod ? a + b - mod : a + b; }
-    inline int sub(int a, int b) { return a >= b ? a - b : a - b + mod; }
-    inline int mul(int a, int b) { return 1ll * a * b >= mod ? 1ll * a * b % mod : a * b; }
-    inline int fast_power(int a, int b, int res = 1)
+    const uint64_t mod = 1179649, G = 19;
+    const uint64_t N = (1 << 15) + 1, C = 17;
+    inline uint64_t add(uint64_t a, uint64_t b) { return a + b >= mod ? a + b - mod : a + b; }
+    inline uint64_t sub(uint64_t a, uint64_t b) { return a >= b ? a - b : a - b + mod; }
+    inline uint64_t mul(uint64_t a, uint64_t b) { return a * b >= mod ? a * b % mod : a * b; }
+    inline uint64_t fast_power(uint64_t a, uint64_t b, uint64_t res = 1)
     {
         for (; b; b >>= 1, a = mul(a, a))
             (b & 1) ? (res = mul(res, a)) : 0;
@@ -22,26 +23,26 @@ namespace NTT
     // Init all powers
     void init_w();
     // Evaluate polynomial with coefficients a at x
-    int F(const std::vector<int> a, int x);
+    uint64_t F(const std::vector<uint64_t> a, uint64_t x);
     class NTTInterpolator
     {
     public:
         static void init();
-        void init_with_params(int n, std::vector<int> &x);
-        std::vector<std::vector<int>> fast_lagrange(std::vector<std::vector<int>> y);
+        void init_with_params(uint64_t n, std::vector<uint64_t> &x);
+        std::vector<std::vector<uint64_t>> fast_lagrange(std::vector<std::vector<uint64_t>> y);
 
     private:
-        void build_inner(int u, int l, int r);
-        void calc_inner(int u, int l, int r, std::vector<int> res, std::vector<std::vector<int>> &y);
-        std::vector<int> get_ans_inner(int u, int l, int r, std::vector<int> &g);
+        void build_inner(uint64_t u, uint64_t l, uint64_t r);
+        void calc_inner(uint64_t u, uint64_t l, uint64_t r, std::vector<uint64_t> res, std::vector<std::vector<uint64_t>> &y);
+        std::vector<uint64_t> get_ans_inner(uint64_t u, uint64_t l, uint64_t r, std::vector<uint64_t> &g);
         void build();
-        void calc(std::vector<std::vector<int>> &y);
-        std::vector<std::vector<int>> get_ans();
-        int n;
-        int poly_count;
-        std::vector<int> x;
-        std::vector<int> f[N << 1];
-        std::vector<int> deriv_f;
-        std::vector<std::vector<int>> g;
+        void calc(std::vector<std::vector<uint64_t>> &y);
+        std::vector<std::vector<uint64_t>> get_ans();
+        uint64_t n;
+        uint64_t poly_count;
+        std::vector<uint64_t> x;
+        std::vector<uint64_t> f[N << 1];
+        std::vector<uint64_t> deriv_f;
+        std::vector<std::vector<uint64_t>> g;
     };
 }
