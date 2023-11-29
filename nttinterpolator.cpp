@@ -22,26 +22,23 @@ namespace NTT
                 w[i][j] = w[i + 1][j << 1];
     }
 
-    // kd is the ntt direction, -1 for intt
-    void ntt(std::vector<int> &f, int lim, int kd)
-    {
-        for (int i = 0; i < lim; i++)
-            if (i > rev[i])
-                std::swap(f[i], f[rev[i]]);
-        for (int mid = 1, l = 1; mid < lim; mid <<= 1, l++)
-            for (int i = 0, a0, a1; i < lim; i += (mid << 1))
-                for (int j = 0; j < mid; j++)
-                {
-                    a0 = f[i + j], a1 = mul(f[i + j + mid], w[l][j]);
-                    f[i + j] = add(a0, a1), f[i + j + mid] = sub(a0, a1);
-                }
-        if (kd == -1)
-        {
-            std::reverse(f.begin() + 1, f.begin() + lim);
-            for (int i = 0, inv = fast_power(lim, mod - 2); i < lim; i++)
-                f[i] = mul(f[i], inv);
-        }
-    }
+// kd is the ntt direction, -1 for intt
+void ntt(std::vector<int> &f, int lim, int kd) {
+  for (int i = 0; i < lim; i++)
+    if (i > rev[i])
+      std::swap(f[i], f[rev[i]]);
+  for (int mid = 1, l = 1; mid < lim; mid <<= 1, l++)
+    for (int i = 0, a0, a1; i < lim; i += (mid << 1))
+      for (int j = 0; j < mid; j++) {
+        a0 = f[i + j], a1 = mul(f[i + j + mid], w[l][j]);
+        f[i + j] = add(a0, a1), f[i + j + mid] = sub(a0, a1);
+      }
+  if (kd == -1) {
+    std::reverse(f.begin() + 1, f.begin() + lim);
+    for (int i = 0, inv = fast_power(lim, mod - 2); i < lim; i++)
+      f[i] = mul(f[i], inv);
+  }
+}
 
     inline std::vector<int> operator+(const std::vector<int> &a, const std::vector<int> &b)
     {
@@ -130,74 +127,65 @@ namespace NTT
 #define rc ((u << 1) | 1)
 #define mid ((l + r) >> 1)
 
-    void NTTInterpolator::build()
-    {
-        build_inner(1, 1, n);
-    }
+void NTTInterpolator::build() { build_inner(1, 1, n); }
 
-    void NTTInterpolator::build_inner(int u, int l, int r)
-    {
-        if (l == r)
-        {
-            f[u].push_back(mod - x[l]), f[u].push_back(1);
-            return;
-        }
-        build_inner(lc, l, mid), build_inner(rc, mid + 1, r);
-        f[u] = f[lc] * f[rc];
-    }
-
-    void NTTInterpolator::calc(std::vector<std::vector<int>> &y)
-    {
-        return calc_inner(1, 1, n, deriv_f, y);
-    }
-    void NTTInterpolator::calc_inner(int u, int l, int r, std::vector<int> res, std::vector<std::vector<int>> &y)
-    {
-        if (l == r)
-        {
-            for (int i = 0; i < poly_count; i++)
-                g[i][l] = mul(fast_power(F(res, x[l]), mod - 2), y[i][l]);
-            return;
-        }
-        calc_inner(lc, l, mid, res % f[lc], y), calc_inner(rc, mid + 1, r, res % f[rc], y);
-    }
-    std::vector<std::vector<int>> NTTInterpolator::get_ans()
-    {
-        std::vector<std::vector<int>> res;
-        for (int i = 0; i < poly_count; i++)
-        {
-            res.push_back(get_ans_inner(1, 1, n, g[i]));
-        }
-        return res;
-    }
-
-    std::vector<int> NTTInterpolator::get_ans_inner(int u, int l, int r, std::vector<int> &g)
-    {
-        if (l == r)
-            return std::vector<int>(1, g[l]);
-        std::vector<int> ansl = get_ans_inner(lc, l, mid, g), ansr = get_ans_inner(rc, mid + 1, r, g);
-        return ansl * f[rc] + ansr * f[lc];
-    }
-
-    void NTTInterpolator::init()
-    {
-        init_w();
-    }
-
-    void NTTInterpolator::init_with_params(int n, std::vector<int> &x)
-    {
-        init();
-        this->n = n;
-        this->x = x;
-        this->build();
-        this->deriv_f = deriv(f[1]);
-    }
-
-    std::vector<std::vector<int>> NTTInterpolator::fast_lagrange(std::vector<std::vector<int>> y)
-    {
-        poly_count = y.size();
-        g = std::vector<std::vector<int>>(poly_count, std::vector<int>(n + 1, 0));
-        calc(y);
-        return get_ans();
-    }
-
+void NTTInterpolator::build_inner(int u, int l, int r) {
+  if (l == r) {
+    f[u].push_back(mod - x[l]), f[u].push_back(1);
+    return;
+  }
+  build_inner(lc, l, mid), build_inner(rc, mid + 1, r);
+  f[u] = f[lc] * f[rc];
 }
+
+void NTTInterpolator::calc(std::vector<std::vector<int>> &y) {
+  return calc_inner(1, 1, n, deriv_f, y);
+}
+void NTTInterpolator::calc_inner(int u, int l, int r, std::vector<int> res,
+                                 std::vector<std::vector<int>> &y) {
+  if (l == r) {
+    for (int i = 0; i < poly_count; i++)
+      g[i][l] = mul(fast_power(F(res, x[l]), mod - 2), y[i][l]);
+    return;
+  }
+  calc_inner(lc, l, mid, res % f[lc], y),
+      calc_inner(rc, mid + 1, r, res % f[rc], y);
+}
+std::vector<std::vector<int>> NTTInterpolator::get_ans() {
+  std::vector<std::vector<int>> res;
+  for (int i = 0; i < poly_count; i++) {
+    res.push_back(get_ans_inner(1, 1, n, g[i]));
+  }
+  return res;
+}
+
+std::vector<int> NTTInterpolator::get_ans_inner(int u, int l, int r,
+                                                std::vector<int> &g) {
+  if (l == r)
+    return std::vector<int>(1, g[l]);
+  std::vector<int> ansl = get_ans_inner(lc, l, mid, g),
+                   ansr = get_ans_inner(rc, mid + 1, r, g);
+  return ansl * f[rc] + ansr * f[lc];
+}
+
+void NTTInterpolator::init() { init_w(); }
+
+void NTTInterpolator::init_with_params(int n, std::vector<int> &x) {
+
+  for (auto i = 0; i < (N << 2); i++)
+    this->f[i].clear();
+  this->n = n;
+  this->x = x;
+  this->build();
+  this->deriv_f = deriv(f[1]);
+}
+
+std::vector<std::vector<int>>
+NTTInterpolator::fast_lagrange(std::vector<std::vector<int>> y) {
+  poly_count = y.size();
+  g = std::vector<std::vector<int>>(poly_count, std::vector<int>(n + 1, 0));
+  calc(y);
+  return get_ans();
+}
+
+} // namespace NTT
