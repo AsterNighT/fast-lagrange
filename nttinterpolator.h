@@ -6,7 +6,8 @@
 
 namespace NTT
 {
-    const int mod = 1785857, G = 3;
+    const int mod = 1179649, G = 19;
+    const int N = (1 << 15) + 1, C = 17;
     inline int add(int a, int b) { return a + b >= mod ? a + b - mod : a + b; }
     inline int sub(int a, int b) { return a >= b ? a - b : a - b + mod; }
     inline int mul(int a, int b) { return 1ll * a * b >= mod ? 1ll * a * b % mod : a * b; }
@@ -18,7 +19,6 @@ namespace NTT
     }
     // N: poly degree limit
     // C: power limit
-    const int N = (1 << 17) + 1, C = 14;
     // Init all powers
     void init_w();
     // Evaluate polynomial with coefficients a at x
@@ -40,7 +40,7 @@ namespace NTT
         int n;
         int poly_count;
         std::vector<int> x;
-        std::vector<int> f[N << 2];
+        std::vector<int> f[N << 1];
         std::vector<int> deriv_f;
         std::vector<std::vector<int>> g;
     };

@@ -3,7 +3,7 @@
 namespace NTT
 {
     std::vector<int> w[C + 1];
-    int rev[N << 2];
+    int rev[N << 1];
     void init_rev(int lim)
     {
         for (int i = 0; i < lim; i++)
@@ -70,7 +70,6 @@ namespace NTT
         }
         while (lim < deg)
             lim <<= 1;
-        int rev[N << 2];
         init_rev(lim);
         a.resize(lim), ntt(a, lim, 1);
         b.resize(lim), ntt(b, lim, 1);
