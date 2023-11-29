@@ -1,23 +1,26 @@
 #include "nttinterpolator.h"
 
-namespace NTT {
-std::vector<int> w[C + 1];
-int rev[N << 2];
-void init_rev(int lim) {
-  for (int i = 0; i < lim; i++)
-    rev[i] = (rev[i >> 1] >> 1) | ((i & 1) * (lim >> 1));
-}
-void init_w() {
-  for (int i = 1; i <= C; i++)
-    w[i].resize((1 << (i - 1)));
-  int wn = fast_power(G, (mod - 1) / (1 << C));
-  w[C][0] = 1;
-  for (int i = 1; i < (1 << (C - 1)); i++)
-    w[C][i] = mul(w[C][i - 1], wn);
-  for (int i = C - 1; i; i--)
-    for (int j = 0; j < (1 << (i - 1)); j++)
-      w[i][j] = w[i + 1][j << 1];
-}
+namespace NTT
+{
+    std::vector<int> w[C + 1];
+    int rev[N << 1];
+    void init_rev(int lim)
+    {
+        for (int i = 0; i < lim; i++)
+            rev[i] = (rev[i >> 1] >> 1) | ((i & 1) * (lim >> 1));
+    }
+    void init_w()
+    {
+        for (int i = 1; i <= C; i++)
+            w[i].resize((1 << (i - 1)));
+        int wn = fast_power(G, (mod - 1) / (1 << C));
+        w[C][0] = 1;
+        for (int i = 1; i < (1 << (C - 1)); i++)
+            w[C][i] = mul(w[C][i - 1], wn);
+        for (int i = C - 1; i; i--)
+            for (int j = 0; j < (1 << (i - 1)); j++)
+                w[i][j] = w[i + 1][j << 1];
+    }
 
 // kd is the ntt direction, -1 for intt
 void ntt(std::vector<int> &f, int lim, int kd) {
@@ -37,82 +40,89 @@ void ntt(std::vector<int> &f, int lim, int kd) {
   }
 }
 
-inline std::vector<int> operator+(const std::vector<int> &a,
-                                  const std::vector<int> &b) {
-  std::vector<int> c(std::max(a.size(), b.size()), 0);
-  for (int i = 0; i < c.size(); i++)
-    c[i] = add(a[i], b[i]);
-  return c;
-}
-inline std::vector<int> operator-(const std::vector<int> &a,
-                                  const std::vector<int> &b) {
-  std::vector<int> c(std::max(a.size(), b.size()), 0);
-  for (int i = 0; i < c.size(); i++)
-    c[i] = sub(a[i], b[i]);
-  return c;
-}
-inline std::vector<int> operator*(std::vector<int> a, std::vector<int> b) {
-  int deg = a.size() + b.size() - 1, lim = 1;
-  if (deg <= 128) {
-    std::vector<int> c(deg, 0);
-    for (int i = 0; i < a.size(); i++)
-      for (int j = 0; j < b.size(); j++)
-        c[i + j] = add(c[i + j], mul(a[i], b[j]));
-    return c;
-  }
-  while (lim < deg)
-    lim <<= 1;
-  int rev[N << 2];
-  init_rev(lim);
-  a.resize(lim), ntt(a, lim, 1);
-  b.resize(lim), ntt(b, lim, 1);
-  for (int i = 0; i < lim; i++)
-    a[i] = mul(a[i], b[i]);
-  ntt(a, lim, -1), a.resize(deg);
-  return a;
-}
-inline std::vector<int> Inv(std::vector<int> a, int deg) {
-  std::vector<int> b, c(1, fast_power(a[0], mod - 2));
-  for (int lim = 4; lim < (deg << 2); lim <<= 1) {
-    b = a, b.resize(lim >> 1);
-    init_rev(lim);
-    b.resize(lim), ntt(b, lim, 1);
-    c.resize(lim), ntt(c, lim, 1);
-    for (int i = 0; i < lim; i++)
-      c[i] = mul(c[i], sub(2, mul(b[i], c[i])));
-    ntt(c, lim, -1), c.resize(lim >> 1);
-  }
-  c.resize(deg);
-  return c;
-}
-inline std::vector<int> operator/(std::vector<int> a, std::vector<int> b) {
-  int lim = 1, deg = a.size() - b.size() + 1;
-  std::reverse(a.begin(), a.end());
-  std::reverse(b.begin(), b.end());
-  while (lim < deg)
-    lim <<= 1;
-  b = Inv(b, lim), b.resize(deg);
-  a = a * b, a.resize(deg);
-  std::reverse(a.begin(), a.end());
-  return a;
-}
-inline std::vector<int> operator%(std::vector<int> a, std::vector<int> b) {
-  std::vector<int> c = a - (a / b) * b;
-  c.resize(b.size() - 1);
-  return c;
-}
-inline std::vector<int> deriv(std::vector<int> a) {
-  for (int i = 0; i < a.size() - 1; i++)
-    a[i] = mul(a[i + 1], i + 1);
-  a.pop_back();
-  return a;
-}
-int F(const std::vector<int> a, int x) {
-  int p = 1, res = 0;
-  for (int i = 0; i < a.size(); i++, p = mul(p, x))
-    res = add(res, mul(a[i], p));
-  return res;
-}
+    inline std::vector<int> operator+(const std::vector<int> &a, const std::vector<int> &b)
+    {
+        std::vector<int> c(std::max(a.size(), b.size()), 0);
+        for (int i = 0; i < c.size(); i++)
+            c[i] = add(a[i], b[i]);
+        return c;
+    }
+    inline std::vector<int> operator-(const std::vector<int> &a, const std::vector<int> &b)
+    {
+        std::vector<int> c(std::max(a.size(), b.size()), 0);
+        for (int i = 0; i < c.size(); i++)
+            c[i] = sub(a[i], b[i]);
+        return c;
+    }
+    inline std::vector<int> operator*(std::vector<int> a, std::vector<int> b)
+    {
+        int deg = a.size() + b.size() - 1, lim = 1;
+        if (deg <= 128)
+        {
+            std::vector<int> c(deg, 0);
+            for (int i = 0; i < a.size(); i++)
+                for (int j = 0; j < b.size(); j++)
+                    c[i + j] = add(c[i + j], mul(a[i], b[j]));
+            return c;
+        }
+        while (lim < deg)
+            lim <<= 1;
+        init_rev(lim);
+        a.resize(lim), ntt(a, lim, 1);
+        b.resize(lim), ntt(b, lim, 1);
+        for (int i = 0; i < lim; i++)
+            a[i] = mul(a[i], b[i]);
+        ntt(a, lim, -1), a.resize(deg);
+        return a;
+    }
+    inline std::vector<int> Inv(std::vector<int> a, int deg)
+    {
+        std::vector<int> b, c(1, fast_power(a[0], mod - 2));
+        for (int lim = 4; lim < (deg << 2); lim <<= 1)
+        {
+            b = a, b.resize(lim >> 1);
+            init_rev(lim);
+            b.resize(lim), ntt(b, lim, 1);
+            c.resize(lim), ntt(c, lim, 1);
+            for (int i = 0; i < lim; i++)
+                c[i] = mul(c[i], sub(2, mul(b[i], c[i])));
+            ntt(c, lim, -1), c.resize(lim >> 1);
+        }
+        c.resize(deg);
+        return c;
+    }
+    inline std::vector<int> operator/(std::vector<int> a, std::vector<int> b)
+    {
+        int lim = 1, deg = a.size() - b.size() + 1;
+        std::reverse(a.begin(), a.end());
+        std::reverse(b.begin(), b.end());
+        while (lim < deg)
+            lim <<= 1;
+        b = Inv(b, lim), b.resize(deg);
+        a = a * b, a.resize(deg);
+        std::reverse(a.begin(), a.end());
+        return a;
+    }
+    inline std::vector<int> operator%(std::vector<int> a, std::vector<int> b)
+    {
+        std::vector<int> c = a - (a / b) * b;
+        c.resize(b.size() - 1);
+        return c;
+    }
+    inline std::vector<int> deriv(std::vector<int> a)
+    {
+        for (int i = 0; i < a.size() - 1; i++)
+            a[i] = mul(a[i + 1], i + 1);
+        a.pop_back();
+        return a;
+    }
+    int F(const std::vector<int> a, int x)
+    {
+        int p = 1, res = 0;
+        for (int i = 0; i < a.size(); i++, p = mul(p, x))
+            res = add(res, mul(a[i], p));
+        return res;
+    }
 #define lc (u << 1)
 #define rc ((u << 1) | 1)
 #define mid ((l + r) >> 1)
