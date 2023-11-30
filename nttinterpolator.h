@@ -8,7 +8,8 @@
 namespace NTT
 {
     const uint64_t mod = 1179649, G = 19;
-    const uint64_t N = (1 << 15) + 1, C = 17;
+    const uint64_t n = 15;
+    const uint64_t N = (1 << n) + 1, C = 17;
     inline uint64_t add(uint64_t a, uint64_t b) { return a + b >= mod ? a + b - mod : a + b; }
     inline uint64_t sub(uint64_t a, uint64_t b) { return a >= b ? a - b : a - b + mod; }
     inline uint64_t mul(uint64_t a, uint64_t b) { return a * b >= mod ? a * b % mod : a * b; }
@@ -21,7 +22,6 @@ namespace NTT
     // N: poly degree limit
     // C: power limit
     // Init all powers
-    void init_w();
     // Evaluate polynomial with coefficients a at x
     uint64_t F(const std::vector<uint64_t> a, uint64_t x);
     class NTTInterpolator
@@ -42,7 +42,6 @@ namespace NTT
         uint64_t poly_count;
         std::vector<uint64_t> x;
         std::vector<uint64_t> f[N << 1];
-        uint64_t rev[N << 1];
         std::vector<uint64_t> deriv_f;
         std::vector<std::vector<uint64_t>> g;
     };

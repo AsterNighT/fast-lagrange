@@ -1,15 +1,20 @@
 #include "nttinterpolator.h"
 
+#define log2(x) (__builtin_ctz(x))
+
 namespace NTT
 {
-    thread_local uint64_t* rev;
     std::vector<uint64_t> w[C + 1];
-    // uint64_t rev[N << 1];
-    void init_rev(uint64_t lim)
+    std::vector<uint64_t> rev_list[n + 1];
+    void init_rev()
     {
-        // printf("init_rev %lu\n", lim);
-        for (uint64_t i = 0; i < lim; i++)
-            rev[i] = (rev[i >> 1] >> 1) | ((i & 1) * (lim >> 1));
+        for (int i = 0; i <= n; i++)
+        {
+            uint64_t lim = 1 << i;
+            rev_list[i].resize(lim);
+            for (uint64_t j = 0; j < lim; j++)
+                rev_list[i][j] = (rev_list[i][j >> 1] >> 1) | ((j & 1) * (lim >> 1));
+        }
     }
     void init_w()
     {
@@ -25,7 +30,7 @@ namespace NTT
     }
 
     // kd is the ntt direction, -1 for intt
-    void ntt(std::vector<uint64_t> &f, uint64_t lim, uint64_t kd)
+    void ntt(std::vector<uint64_t> &f, uint64_t lim, uint64_t kd, uint64_t *rev)
     {
         for (uint64_t i = 0; i < lim; i++)
             if (i > rev[i])
@@ -45,14 +50,16 @@ namespace NTT
         }
     }
 
-    inline std::vector<uint64_t> operator+(const std::vector<uint64_t> &a, const std::vector<uint64_t> &b)
+    inline std::vector<uint64_t> operator+(const std::vector<uint64_t> &a,
+                                           const std::vector<uint64_t> &b)
     {
         std::vector<uint64_t> c(std::max(a.size(), b.size()), 0);
         for (uint64_t i = 0; i < c.size(); i++)
             c[i] = add(a[i], b[i]);
         return c;
     }
-    inline std::vector<uint64_t> operator-(const std::vector<uint64_t> &a, const std::vector<uint64_t> &b)
+    inline std::vector<uint64_t> operator-(const std::vector<uint64_t> &a,
+                                           const std::vector<uint64_t> &b)
     {
         std::vector<uint64_t> c(std::max(a.size(), b.size()), 0);
         for (uint64_t i = 0; i < c.size(); i++)
@@ -72,12 +79,11 @@ namespace NTT
         }
         while (lim < deg)
             lim <<= 1;
-        init_rev(lim);
-        a.resize(lim), ntt(a, lim, 1);
-        b.resize(lim), ntt(b, lim, 1);
+        a.resize(lim), ntt(a, lim, 1, rev_list[log2(lim)].data());
+        b.resize(lim), ntt(b, lim, 1, rev_list[log2(lim)].data());
         for (uint64_t i = 0; i < lim; i++)
             a[i] = mul(a[i], b[i]);
-        ntt(a, lim, -1), a.resize(deg);
+        ntt(a, lim, -1, rev_list[log2(lim)].data()), a.resize(deg);
         return a;
     }
     inline std::vector<uint64_t> Inv(std::vector<uint64_t> a, uint64_t deg)
@@ -86,12 +92,11 @@ namespace NTT
         for (uint64_t lim = 4; lim < (deg << 2); lim <<= 1)
         {
             b = a, b.resize(lim >> 1);
-            init_rev(lim);
-            b.resize(lim), ntt(b, lim, 1);
-            c.resize(lim), ntt(c, lim, 1);
+            b.resize(lim), ntt(b, lim, 1, rev_list[log2(lim)].data());
+            c.resize(lim), ntt(c, lim, 1, rev_list[log2(lim)].data());
             for (uint64_t i = 0; i < lim; i++)
                 c[i] = mul(c[i], sub(2, mul(b[i], c[i])));
-            ntt(c, lim, -1), c.resize(lim >> 1);
+            ntt(c, lim, -1, rev_list[log2(lim)].data()), c.resize(lim >> 1);
         }
         c.resize(deg);
         return c;
@@ -132,7 +137,10 @@ namespace NTT
 #define rc ((u << 1) | 1)
 #define mid ((l + r) >> 1)
 
-    void NTTInterpolator::build() { build_inner(1, 1, n); }
+    void NTTInterpolator::build()
+    {
+        build_inner(1, 1, n);
+    }
 
     void NTTInterpolator::build_inner(uint64_t u, uint64_t l, uint64_t r)
     {
@@ -158,8 +166,7 @@ namespace NTT
                 g[i][l] = mul(fast_power(F(res, x[l]), mod - 2), y[i][l]);
             return;
         }
-        calc_inner(lc, l, mid, res % f[lc], y),
-            calc_inner(rc, mid + 1, r, res % f[rc], y);
+        calc_inner(lc, l, mid, res % f[lc], y), calc_inner(rc, mid + 1, r, res % f[rc], y);
     }
     std::vector<std::vector<uint64_t>> NTTInterpolator::get_ans()
     {
@@ -172,31 +179,33 @@ namespace NTT
     }
 
     std::vector<uint64_t> NTTInterpolator::get_ans_inner(uint64_t u, uint64_t l, uint64_t r,
-                                                    std::vector<uint64_t> &g)
+                                                         std::vector<uint64_t> &g)
     {
         if (l == r)
             return std::vector<uint64_t>(1, g[l]);
         std::vector<uint64_t> ansl = get_ans_inner(lc, l, mid, g),
-                         ansr = get_ans_inner(rc, mid + 1, r, g);
+                              ansr = get_ans_inner(rc, mid + 1, r, g);
         return ansl * f[rc] + ansr * f[lc];
     }
 
-    void NTTInterpolator::init() { init_w(); }
+    void NTTInterpolator::init()
+    {
+        init_w();
+        init_rev();
+    }
 
     void NTTInterpolator::init_with_params(uint64_t n, std::vector<uint64_t> &x)
     {
-
         for (auto i = 0; i < (N << 1); i++)
             this->f[i].clear();
-        NTT::rev = this->rev;
         this->n = n;
         this->x = x;
         this->build();
         this->deriv_f = deriv(f[1]);
     }
 
-    std::vector<std::vector<uint64_t>>
-    NTTInterpolator::fast_lagrange(std::vector<std::vector<uint64_t>> y)
+    std::vector<std::vector<uint64_t>> NTTInterpolator::fast_lagrange(
+        std::vector<std::vector<uint64_t>> y)
     {
         poly_count = y.size();
         g = std::vector<std::vector<uint64_t>>(poly_count, std::vector<uint64_t>(n + 1, 0));

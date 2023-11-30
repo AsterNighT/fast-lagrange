@@ -1,17 +1,22 @@
 #include "nttinterpolator.h"
 #include <thread>
-
+#include <chrono>
 int run();
+
+const int threads = 8;
 
 int main()
 {
     srand(time(0));
     NTT::NTTInterpolator::init();
-    std::thread t[16];
-    for (int i = 0; i < 16; i++)
+    auto start = std::chrono::steady_clock::now();
+    std::thread t[threads];
+    for (int i = 0; i < threads; i++)
         t[i] = std::thread(run);
-    for (int i = 0; i < 16; i++)
+    for (int i = 0; i < threads; i++)
         t[i].join();
+    auto elapsed = std::chrono::steady_clock::now() - start;
+    printf("%ld ms\n", elapsed.count() / 1000000);
 }
 
 int run()
@@ -33,15 +38,15 @@ int run()
     }
     // for (uint64_t i = 0; i < 4; i++)
     //     std::random_shuffle(y[i].begin() + 1, y[i].end());
-    long start = clock();
-    ntt->init_with_params(n, x);
-    std::vector<std::vector<uint64_t>> ans = ntt->fast_lagrange(y);
-    printf("%ld\n", (clock() - start) * 1000 / CLOCKS_PER_SEC);
-    for (uint64_t i = 0; i < ans.size(); i++)
-    {
-        for (uint64_t j = 1; j <= n; j++)
-            if (y[i][j] != NTT::F(ans[i], x[j]))
-                printf("%lu %lu %lu %lu %lu Bad\n", i, j, x[j], y[i][j], NTT::F(ans[i], x[j]));
+    for(uint64_t i = 0; i < 50; i++){
+        ntt->init_with_params(n, x);
+        std::vector<std::vector<uint64_t>> ans = ntt->fast_lagrange(y);
     }
+    // for (uint64_t i = 0; i < ans.size(); i++)
+    // {
+    //     for (uint64_t j = 1; j <= n; j++)
+    //         if (y[i][j] != NTT::F(ans[i], x[j]))
+    //             printf("%lu %lu %lu %lu %lu Bad\n", i, j, x[j], y[i][j], NTT::F(ans[i], x[j]));
+    // }
     return 0;
 }
