@@ -27,7 +27,6 @@ namespace NTT
     class NTTInterpolator
     {
     public:
-        NTTInterpolator();
         static void init();
         void init_with_params(uint64_t n, std::vector<uint64_t> &x);
         std::vector<std::vector<uint64_t>> fast_lagrange(std::vector<std::vector<uint64_t>> y);
