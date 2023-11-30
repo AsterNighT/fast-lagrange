@@ -2,11 +2,12 @@
 
 namespace NTT
 {
+    thread_local uint64_t* rev;
     std::vector<uint64_t> w[C + 1];
-    uint64_t rev[N << 1];
+    // uint64_t rev[N << 1];
     void init_rev(uint64_t lim)
     {
-        printf("init_rev %lu\n", lim);
+        // printf("init_rev %lu\n", lim);
         for (uint64_t i = 0; i < lim; i++)
             rev[i] = (rev[i >> 1] >> 1) | ((i & 1) * (lim >> 1));
     }
@@ -187,6 +188,7 @@ namespace NTT
 
         for (auto i = 0; i < (N << 1); i++)
             this->f[i].clear();
+        NTT::rev = this->rev;
         this->n = n;
         this->x = x;
         this->build();

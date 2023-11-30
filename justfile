@@ -1,5 +1,5 @@
 CC:="clang++"
-CFLAGS:="-std=c++11 -Wall -Wextra -g"
+CFLAGS:="-std=c++11 -Wall -Wextra -O2"
 SRC:="main.cpp nttinterpolator.cpp"
 TARGET:="main"
 
