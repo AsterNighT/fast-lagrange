@@ -3,7 +3,7 @@
 #include <chrono>
 int run();
 
-const int threads = 8;
+const int threads = 32;
 
 int main()
 {
@@ -38,7 +38,7 @@ int run()
     }
     // for (uint64_t i = 0; i < 4; i++)
     //     std::random_shuffle(y[i].begin() + 1, y[i].end());
-    for(uint64_t i = 0; i < 50; i++){
+    for(uint64_t i = 0; i < 1250; i++){
         ntt->init_with_params(n, x);
         std::vector<std::vector<uint64_t>> ans = ntt->fast_lagrange(y);
     }
